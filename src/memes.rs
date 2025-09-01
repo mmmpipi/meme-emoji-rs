@@ -15,3 +15,5 @@ mod kfc;
 mod adoption;
 mod chuini;
 mod fleshlight_starter_pack;
+mod doro_orange;
+mod handwriting;
