@@ -17,3 +17,6 @@ mod chuini;
 mod fleshlight_starter_pack;
 mod doro_orange;
 mod handwriting;
+mod picking_flowers;
+mod lemon;
+mod fishing;
