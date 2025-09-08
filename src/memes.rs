@@ -20,3 +20,6 @@ mod handwriting;
 mod picking_flowers;
 mod lemon;
 mod fishing;
+mod yes;
+mod whisper;
+mod potato_mines;
