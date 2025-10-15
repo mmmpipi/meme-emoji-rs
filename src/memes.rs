@@ -26,3 +26,6 @@ mod potato_mines;
 mod xueli_say;
 mod xueli_think;
 mod kurogames_carlotta_play;
+mod doro_surrounding_photos;
+mod doro_openlight;
+mod doro_knight;
