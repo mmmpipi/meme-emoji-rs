@@ -29,3 +29,5 @@ mod kurogames_carlotta_play;
 mod doro_surrounding_photos;
 mod doro_openlight;
 mod doro_knight;
+mod mihoyo_sigewinne_fingered;
+mod anan_hs;
