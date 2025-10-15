@@ -25,3 +25,4 @@ mod whisper;
 mod potato_mines;
 mod xueli_say;
 mod xueli_think;
+mod kurogames_carlotta_play;

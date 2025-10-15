@@ -37,7 +37,6 @@ fn xueli_think(images: Vec<InputImage>, _: Vec<String>, _: NoOptions) -> Result<
         let resized_img = input_img.resize_exact((new_width as i32, new_height as i32));
 
         let top_crop = (new_height - (SCREEN_HEIGHT as f32)) / 2.0;
-        println!("{}", top_crop);
 
         let mut surface = new_surface((new_width as i32, new_height as i32));
 
