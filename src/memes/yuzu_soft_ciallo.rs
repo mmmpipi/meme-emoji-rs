@@ -26,11 +26,11 @@ register_meme!(
     yuzu_soft_ciallo,
     min_images = 1,
     max_images = 1,
-    keywords = &["ciallo","ciallo~"],
+    keywords = &["ciallo~"],
     shortcuts = &[
         shortcut!(
             "[cC][iI][aA][lL]{2}[oO]",
-            humanized = "ciallo"
+            humanized = "Ciallo"
         ),
         shortcut!(
             "[cC][iI][aA][lL]{2}[oO]～\\(∠・ω< \\)⌒[★☆]",
