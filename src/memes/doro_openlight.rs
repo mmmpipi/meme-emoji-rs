@@ -12,10 +12,9 @@ use crate::{options::NoOptions, register_meme};
 
 fn doro_openlight(images: Vec<InputImage>, _: Vec<String>, _: NoOptions) -> Result<Vec<u8>, Error> {
     let params = [(33, 35); 63];
-
-    let func = |i: usize, images: Vec<Image>| {
+    let user_head = images[0].image.circle().resize_exact((55, 55));
+    let func = |i: usize, _images: Vec<Image>| {
         let frame = load_image(format!("doro_openlight/{i}.png"))?;
-        let user_head = images[0].circle().resize_exact((55, 55));
         let mut surface = new_surface(frame.dimensions());
         let canvas = surface.canvas();
         canvas.draw_image(&user_head, params[i], None);

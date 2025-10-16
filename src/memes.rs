@@ -31,3 +31,7 @@ mod doro_openlight;
 mod doro_knight;
 mod mihoyo_sigewinne_fingered;
 mod anan_hs;
+mod cooking;
+mod aima_say;
+mod new_goodnews;
+mod xiluo_disgust;
