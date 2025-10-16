@@ -29,11 +29,11 @@ register_meme!(
     keywords = &["ciallo","ciallo~"],
     shortcuts = &[
         shortcut!(
-            "(?i)ciallo",
+            "(?!)ciallo",
             humanized = "ciallo"
         ),
         shortcut!(
-            "(?i)ciallo～\\(∠・ω< \\)⌒[★☆]",
+            "(?!)ciallo～\\(∠・ω< \\)⌒[★☆]",
             humanized = "Ciallo～(∠・ω< )⌒★"
         ),
     ],
