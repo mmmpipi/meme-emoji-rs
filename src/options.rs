@@ -15,4 +15,15 @@ macro_rules! number_option {
     };
 }
 
+#[derive(MemeOptions)]
+pub(crate) struct GrayStandard {
+    /// 灰度图标准
+    #[option(short, long,long_aliases = ["灰度图标准"], default = "rec601_gray", choices = ["rec601", "rec709","rec601_noprocess","rec601_gray"])]
+    pub gray_standard: Option<String>,
+
+    /// 缩放
+    #[option(short, long,long_aliases = ["缩放"], default = false)]
+    pub resize: Option<bool>,
+}
+
 pub(crate) use number_option;

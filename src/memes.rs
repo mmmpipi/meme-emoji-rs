@@ -50,3 +50,4 @@ mod yuzu_soft_murasame_like;
 mod yuzu_soft_murasame_say;
 mod yuzu_soft_shocked;
 mod yuzu_soft_ticket;
+mod louvre;
