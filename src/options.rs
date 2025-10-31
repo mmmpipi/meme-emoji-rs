@@ -24,6 +24,20 @@ pub(crate) struct GrayStandard {
     /// 缩放
     #[option(short, long,long_aliases = ["缩放"], default = false)]
     pub resize: Option<bool>,
+
+    /// 不进行后处理
+    #[option(short, long,long_aliases = ["取消后处理"], default = false)]
+    pub no_postprocess: Option<bool>,
+
+    
+    #[option(short, long, minimum = 0, maximum = 255, default = 20)]
+    pub limit: Option<i32>,
+
+    #[option(short, long, minimum = 0.0, maximum = 30.0, default = 5.0)]
+    pub gain: Option<f32>,
+    
+    #[option(short, long, minimum = -30.0, maximum = 30.0, default = 0.0)]
+    pub bias: Option<f32>,
 }
 
 pub(crate) use number_option;

@@ -12,6 +12,9 @@ use crate::{options::GrayStandard, register_meme};
 
 fn louvre(images: Vec<InputImage>, _: Vec<String>, options: GrayStandard) -> Result<Vec<u8>, Error> {
     let gray_standard = options.gray_standard.unwrap_or_else(|| {"rec601_gray".to_string()});
+    let gain = options.gain.unwrap_or(2.0);
+    let bias = options.bias.unwrap_or(0.0);
+    let limit = options.limit.unwrap_or(20) as u8;
     let func = |images: Vec<Image>| {
         
         #[rustfmt::skip]
@@ -23,17 +26,18 @@ fn louvre(images: Vec<InputImage>, _: Vec<String>, options: GrayStandard) -> Res
         );
 
         let luma_filter = ColorFilter::luma();
-        let Some(blur_filter) = image_filters::blur((0.5, 0.5), None, None, None) else {
+        let Some(blur_filter) = image_filters::blur((0.5, 0.5), TileMode::Clamp, None, None) else {
             return Err(Error::MemeFeedback(
                 "blur filter create Failed!".to_string(),
             ));
         };
         #[rustfmt::skip]
+        let out = -1.0;
         let sobel_x: [f32; 9] = 
         [
-            -1.0, -1.0, -1.0, 
-            -1.0, 8.0, -1.0,
-            -1.0, -1.0, -1.0
+            out, out, out, 
+            out, 8.0, out,
+            out, out, out
         ];
         let kernel_offset = IPoint::new(1, 1); 
         // 通常卷积核偏移为其尺寸的一半减一
@@ -41,8 +45,8 @@ fn louvre(images: Vec<InputImage>, _: Vec<String>, options: GrayStandard) -> Res
         let Some(edge_filter) = image_filters::matrix_convolution(
             (3,3),
             &sobel_x,
-            1.0, // gain，通常设置为1
-            0.0, // bias，通常设置为0
+            gain,
+            bias,
             kernel_offset,
             TileMode::Clamp,
             true, // convolve_alpha，是否对alpha通道进行卷积
@@ -75,14 +79,15 @@ fn louvre(images: Vec<InputImage>, _: Vec<String>, options: GrayStandard) -> Res
         match gray_standard.as_str(){
             "rec709"=>img.color_filter(luma_filter),
             "rec601"=>img.color_matrix(luma_matrix),
-            
             "rec601_gray"=>img.color_matrix(luma_matrix).color_filter(luma_filter),
             "rec601_noprocess"=>{return Ok(img.color_matrix(luma_matrix));},
             _ => return Err(Error::MemeFeedback("not support gray".to_string()))
         }
-        .image_filter(edge_filter)
-        .color_matrix(matrix);
-
+        .image_filter(edge_filter);
+        if options.no_postprocess.unwrap_or(false){
+            return Ok(img);
+        }
+        let img = img.color_matrix(matrix);
         let mut bg = new_surface(img.dimensions());
         bg.canvas().clear(Color::WHITE);
 
@@ -99,9 +104,10 @@ fn louvre(images: Vec<InputImage>, _: Vec<String>, options: GrayStandard) -> Res
         for y in 0..img.height() {
             for x in 0..img.width() {
                 let alpha = data.get_alpha_f((x,y));
-                if alpha < 0.077{
+                let color = data.get_color((x,y));
+                if color.a()<limit{
                     continue;
-                };
+                }
                 let gradient_factor = (x + y) as f32 / (width + height);
 
                 let hue = 0.05 + 0.65 * gradient_factor;
