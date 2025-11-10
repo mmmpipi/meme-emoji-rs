@@ -1,5 +1,9 @@
 use skia_safe::{
-    BlendMode, Color, ColorMatrix, IPoint, IRect, ISize, Image, ImageFilter, Paint, Point, Shader, TileMode, gradient_shader::{self, GradientShaderColors}, image_filters::{self, CropRect}, scalar
+    BlendMode, Color, ColorMatrix, IPoint, IRect, ISize, Image, ImageFilter, Paint, Point, Shader,
+    TileMode,
+    gradient_shader::{self, GradientShaderColors},
+    image_filters::{self, CropRect},
+    scalar,
 };
 
 use meme_generator_core::error::Error;
@@ -113,6 +117,7 @@ fn louvre(
     let mut diff = !options.no_diff.unwrap_or(false);
     let kuma = !options.gray.unwrap_or(false);
     let full_bg = !options.no_bg.unwrap_or(false);
+
     let func = |images: Vec<Image>| {
         let luma_matrix = ColorMatrix::new(
             0.299, 0.587, 0.114, 0.0, 0.0, //
@@ -122,22 +127,23 @@ fn louvre(
         );
         let mut img = images.first().unwrap().to_owned();
         img = img.color_matrix(luma_matrix);
-        if options.denoise.unwrap_or(false) {
+        if !options.no_denoise.unwrap_or(false) {
             const NINE: f32 = 1.0 / 9.0;
-            img = img.image_filter(
-                image_filters::matrix_convolution(
-                    (3, 3),
-                    &[NINE; 9],
-                    1.0,
-                    0.0,
-                    (1, 1),
-                    TileMode::Clamp,
-                    false,
-                    None,
-                    None,
-                )
-                .unwrap(),
+            let denoise_filter = image_filters::matrix_convolution(
+                (3, 3),
+                &[NINE; 9],
+                1.0,
+                0.0,
+                (1, 1),
+                TileMode::Clamp,
+                false,
+                None,
+                None,
             )
+            .unwrap();
+            for _ in 0..options.denoise_times.unwrap_or(1) {
+                img = img.image_filter(denoise_filter.clone());
+            }
         }
         let img_size = img.dimensions();
         let filter = if convolute == "线稿" {
