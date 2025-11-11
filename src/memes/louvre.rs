@@ -14,7 +14,7 @@ use meme_generator_utils::{
     tools::{local_date, new_paint, new_surface},
 };
 
-use crate::{options::GrayStandard, register_meme};
+use crate::{options::Louvre, register_meme};
 
 fn create_convolute_average(width: usize) -> Vec<f32> {
     let value = 1.0 / (width * width) as f32;
@@ -103,11 +103,7 @@ fn create_kiss_gradient(isize: impl Into<ISize>) -> Option<Shader> {
 
 // 在渲染
 
-fn louvre(
-    images: Vec<InputImage>,
-    _: Vec<String>,
-    options: GrayStandard,
-) -> Result<Vec<u8>, Error> {
+fn louvre(images: Vec<InputImage>, _: Vec<String>, options: Louvre) -> Result<Vec<u8>, Error> {
     let binding = options.convolute.unwrap_or("一般".to_string());
     let convolute = binding.as_str();
     let gain = options.gain.unwrap_or(2.0);

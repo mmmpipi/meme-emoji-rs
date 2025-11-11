@@ -9,6 +9,7 @@ crate-type = ["cdylib"]
 [dependencies]
 inventory = "0.3"
 serde = "1.0"
+tween = { version = "2.1" }
 skia-safe = { version = "0.80", features = ["textlayout"] }
 
 meme_generator_core = "0.0.4"

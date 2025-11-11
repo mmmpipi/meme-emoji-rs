@@ -16,7 +16,7 @@ macro_rules! number_option {
 }
 
 #[derive(MemeOptions)]
-pub(crate) struct GrayStandard {
+pub(crate) struct Louvre {
     /// 缩放
     #[option(short, long,long_aliases = ["缩放"], default = false)]
     pub resize: Option<bool>,
@@ -69,12 +69,39 @@ pub(crate) struct WaveEffect {
     /// 偏移
     #[option(short, long,long_aliases = ["相位"], minimum = -80.0, maximum = 80.0, default = 0.0)]
     pub phase: Option<f32>,
-    /// 帧数
-    #[option(short, long,long_aliases = ["相位"], minimum = 5, maximum = 100, default = 10)]
+    /// 帧数量
+    #[option(long,long_aliases = ["帧数量"], minimum = 5, maximum = 100, default = 10)]
     pub frame: Option<i32>,
     /// 单图
     #[option(short, long,long_aliases = ["单图"], default = false)]
     pub single: Option<bool>,
+}
+
+#[derive(MemeOptions)]
+pub(crate) struct SwirlEffect {
+    /// 强度
+    #[option(short, long,long_aliases = ["强度"], minimum = -30.0, maximum = 30.0, default = 0.5)]
+    pub strength: Option<f32>,
+
+    /// 半径
+    #[option(short, long,long_aliases = ["半径"], minimum = 0.0, maximum = 4.0, default = 0.5)]
+    pub radius: Option<f32>,
+
+    /// 偏移
+    #[option(short, long,long_aliases = ["相位"], minimum = -80.0, maximum = 80.0, default = 0.0)]
+    pub phase: Option<f32>,
+    /// 动画时间
+    #[option(short, long,long_aliases = ["时间"], minimum = 0.01, maximum = 30.0, default = 2.0)]
+    pub time: Option<f32>,
+    /// 动画前空转时间
+    #[option(short, long,long_aliases = ["时间"], minimum = 0.01, maximum = 30.0, default = 0.2)]
+    pub empty_time: Option<f32>,
+    /// 单图
+    #[option(long,long_aliases = ["单图"], default = false)]
+    pub single: Option<bool>,
+    /// 循环
+    #[option(long,long_aliases = ["循环"], default = false)]
+    pub loopback: Option<bool>,
 }
 
 pub(crate) use number_option;

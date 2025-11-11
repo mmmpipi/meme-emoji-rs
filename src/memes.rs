@@ -52,3 +52,4 @@ mod yuzu_soft_shocked;
 mod yuzu_soft_ticket;
 mod louvre;
 mod wave_distortion;
+mod swirl;
