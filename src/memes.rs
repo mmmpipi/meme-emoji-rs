@@ -53,3 +53,5 @@ mod yuzu_soft_ticket;
 mod louvre;
 mod wave_distortion;
 mod swirl;
+mod rabbit;
+mod dalia_everyone;
