@@ -57,7 +57,7 @@ fn christmas_gift(images: Vec<InputImage>, _: Vec<String>, _: NoOptions) -> Resu
 
     let func = |i: usize, images: Vec<Image>| {
         let frame = load_image(format!("christmas_gift/{i}.png"))?;
-        let user_head = images[0].resize_fit((300, 215), Fit::Contain);
+        let user_head = images[0].resize_fit((300, 215), Fit::Cover);
         let mut surface = new_surface(frame.dimensions());
         let canvas = surface.canvas();
         if positions[i].1 != 0 {
