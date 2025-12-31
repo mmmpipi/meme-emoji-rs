@@ -55,3 +55,6 @@ mod wave_distortion;
 mod swirl;
 mod rabbit;
 mod dalia_everyone;
+mod christmas_hat;
+mod christmas_eve;
+mod christmas_gift;
