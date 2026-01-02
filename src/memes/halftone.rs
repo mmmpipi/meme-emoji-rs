@@ -1,7 +1,7 @@
 use std::cell::LazyCell;
 
 use skia_safe::{
-    ColorMatrix, Data, IRect, Image, Paint, Point, RuntimeEffect, SamplingOptions,
+    ColorMatrix, Data, IRect, Image, Paint, Point, RuntimeEffect, SamplingOptions, Size,
     runtime_effect::ChildPtr,
 };
 
@@ -131,6 +131,7 @@ fn halftone(
     let dot_spacing: f32 = options.dot_spacing.unwrap_or(1.3);
     let gray_threshold: f32 = options.gray_threshold.unwrap_or(0.0);
     let inverse_color: bool = options.inverse_color.unwrap_or(false);
+    let min_size: i32 = 600;
 
     let single_func = |images: Vec<Image>| {
         let inverse_color_matrix = ColorMatrix::new(
@@ -140,10 +141,30 @@ fn halftone(
             0.0, 0.0, 0.0, 1.0, 0.0, //
         );
 
-        let img = images.first().unwrap();
+        let mut img = images.first().unwrap().to_owned();
+        if img.dimensions().height < min_size {
+            let value = min_size as f32 / img.dimensions().height as f32;
+            img = img.resize_exact(
+                Size::new(
+                    img.dimensions().width as f32 * value,
+                    img.dimensions().height as f32 * value,
+                )
+                .to_round(),
+            )
+        }
+        if img.dimensions().width < min_size {
+            let value = min_size as f32 / img.dimensions().width as f32;
+            img = img.resize_exact(
+                Size::new(
+                    img.dimensions().width as f32 * value,
+                    img.dimensions().height as f32 * value,
+                )
+                .to_round(),
+            )
+        }
         let mut result = new_surface(img.dimensions());
         let shader = create_swirl_effect(
-            img,
+            &img,
             (0.5, 0.5),
             dot_size,
             dot_spacing,
