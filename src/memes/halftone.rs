@@ -128,7 +128,7 @@ fn halftone(
     //let base_color: Color = Color::from_argb(155, 0, 0, 0);
     let dot_size: f32 = options.dot_size.unwrap_or(1.0);
     let angle: f32 = 0.0;
-    let dot_spacing: f32 = options.dot_spacing.unwrap_or(1.3);
+    let dot_spacing: f32 = options.dot_spacing.unwrap_or(0.8);
     let gray_threshold: f32 = options.gray_threshold.unwrap_or(0.0);
     let inverse_color: bool = options.inverse_color.unwrap_or(false);
     let min_size: i32 = 600;
@@ -194,11 +194,11 @@ fn halftone(
 #[derive(MemeOptions)]
 pub(crate) struct HalftoneEffect {
     /// 点大小
-    #[option(short, long,long_aliases = ["点大小"], minimum = 0.1, maximum = 10.0, default = 1.0)]
+    #[option(long,long_aliases = ["ds","点大小"], minimum = 0.1, maximum = 10.0, default = 1.0)]
     pub dot_size: Option<f32>,
 
     /// 点间距
-    #[option(short, long,long_aliases = ["点间距"], minimum = 0.0, maximum = 10.0, default = 1.3)]
+    #[option(short, long,long_aliases = ["点间距"], minimum = 0.0, maximum = 10.0, default = 0.8)]
     pub dot_spacing: Option<f32>,
 
     /// 将会在图像上减去此灰度
@@ -215,7 +215,7 @@ register_meme!(
     halftone,
     min_images = 1,
     max_images = 1,
-    keywords = &["半色调"],
+    keywords = &["半色调","打印机"],
     date_created = local_date(2025, 11, 11),
     date_modified = local_date(2025, 11, 11),
 );
