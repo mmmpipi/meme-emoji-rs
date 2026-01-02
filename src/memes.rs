@@ -59,3 +59,4 @@ mod christmas_hat;
 mod christmas_eve;
 mod christmas_gift;
 mod halftone;
+mod kurogames_phoebe_hug;
