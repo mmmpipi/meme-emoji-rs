@@ -58,3 +58,4 @@ mod dalia_everyone;
 mod christmas_hat;
 mod christmas_eve;
 mod christmas_gift;
+mod halftone;
