@@ -10,7 +10,7 @@
 
 ## meme-emoji-rs 表情包扩展仓库 
 
-基于 [meme-emoji](https://github.com/anyliew/meme_emoji) 的rust版本表情包扩展仓库
+基于 [meme-generator-rs](https://github.com/MemeCrafters/meme-generator-rs) 的一些表情包扩展
 
 
 ## 📄 使用教程 
@@ -23,8 +23,6 @@
 延续上游 MIT 许可证 
 
 > MIT License https://github.com/MemeCrafters/meme-generator/blob/main/LICENSE
-> 
-> MIT License https://github.com/anyliew/meme_emoji/blob/main/LICENSE
 >  
 > MIT License https://github.com/mmmpipi/meme-emoji-rs/blob/main/LICENSE
 
@@ -39,6 +37,8 @@
 - [meme-generator-rs](https://github.com/MemeCrafters/meme-generator-rs) 
 
 - [meme_emoji](https://github.com/anyliew/meme_emoji)
+
+- [meme_emoji_rust](https://github.com/anyliew/meme_emoji_rust)
 
 
 ## 📌 免责声明
