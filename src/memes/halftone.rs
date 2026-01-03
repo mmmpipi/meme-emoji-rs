@@ -121,7 +121,7 @@ vec4 main(vec2 coord) {
     Ok(swirl_shader)
 }
 
-fn halftone(
+pub fn halftone(
     images: Vec<InputImage>,
     _: Vec<String>,
     options: ColorfulHalftoneEffect,
@@ -267,6 +267,6 @@ register_meme!(
     max_images = 1,
     keywords = &["半色调", "打印机"],
     shortcuts = &[shortcut!("彩色打印机", options = &[("colorful_inner", 1)])],
-    date_created = local_date(2025, 11, 11),
-    date_modified = local_date(2025, 11, 11),
+    date_created = local_date(2026, 1, 4),
+    date_modified = local_date(2026, 1, 4),
 );

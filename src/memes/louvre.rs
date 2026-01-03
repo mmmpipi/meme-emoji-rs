@@ -101,9 +101,7 @@ fn create_kiss_gradient(isize: impl Into<ISize>) -> Option<Shader> {
     )
 }
 
-// 在渲染
-
-fn louvre(images: Vec<InputImage>, _: Vec<String>, options: Louvre) -> Result<Vec<u8>, Error> {
+pub fn louvre(images: Vec<InputImage>, _: Vec<String>, options: Louvre) -> Result<Vec<u8>, Error> {
     let binding = options.convolute.unwrap_or("一般".to_string());
     let convolute = binding.as_str();
     let gain = options.gain.unwrap_or(2.0);
