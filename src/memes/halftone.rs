@@ -1,8 +1,8 @@
 use std::cell::LazyCell;
 
 use skia_safe::{
-    ColorMatrix, Data, IRect, Image, Paint, Point, RuntimeEffect, SamplingOptions, Size,
-    runtime_effect::ChildPtr,
+    Color, ColorMatrix, Data, IRect, Image, Paint, Point, Rect, RuntimeEffect, SamplingOptions,
+    Size, runtime_effect::ChildPtr,
 };
 
 use meme_generator_core::error::Error;
@@ -10,6 +10,7 @@ use meme_generator_utils::{
     builder::{InputImage, MemeOptions},
     encoder::make_png_or_gif,
     image::ImageExt,
+    shortcut,
     tools::{local_date, new_surface},
 };
 
@@ -123,15 +124,30 @@ vec4 main(vec2 coord) {
 fn halftone(
     images: Vec<InputImage>,
     _: Vec<String>,
-    options: HalftoneEffect,
+    options: ColorfulHalftoneEffect,
 ) -> Result<Vec<u8>, Error> {
     //let base_color: Color = Color::from_argb(155, 0, 0, 0);
+    let colorful = options.colorful.unwrap_or(false);
+    let colorful = if options.colorful_inner.unwrap_or(0) > 0 {
+        true
+    } else {
+        colorful
+    };
     let dot_size: f32 = options.dot_size.unwrap_or(1.0);
     let angle: f32 = 0.0;
-    let dot_spacing: f32 = options.dot_spacing.unwrap_or(0.8);
-    let gray_threshold: f32 = options.gray_threshold.unwrap_or(0.0);
+    let dot_spacing: f32 = if colorful {
+        options.dot_spacing.unwrap_or(0.6)
+    } else {
+        options.dot_spacing.unwrap_or(0.8)
+    };
     let inverse_color: bool = options.inverse_color.unwrap_or(false);
+    let gray_threshold: f32 = options.gray_threshold.unwrap_or(0.0);
     let min_size: i32 = 600;
+    let inverse_color = if colorful {
+        !inverse_color
+    } else {
+        inverse_color
+    };
 
     let single_func = |images: Vec<Image>| {
         let inverse_color_matrix = ColorMatrix::new(
@@ -139,6 +155,12 @@ fn halftone(
             0.0, -1.0, 0.0, 0.0, 1.0, //
             0.0, 0.0, -1.0, 0.0, 1.0, //
             0.0, 0.0, 0.0, 1.0, 0.0, //
+        );
+        let last_color_matrix = ColorMatrix::new(
+            1.0, 0.0, 0.0, 0.0, 0.0, //
+            0.0, 1.0, 0.0, 0.0, 0.0, //
+            0.0, 0.0, 1.0, 0.0, 0.0, //
+            1.0, 0.0, 0.0, 0.0, 0.0, //
         );
 
         let mut img = images.first().unwrap().to_owned();
@@ -179,12 +201,32 @@ fn halftone(
             IRect::from_size(img.dimensions()),
             Paint::default().set_shader(shader),
         );
+
+        if colorful {
+            result = result
+                .image_snapshot()
+                .color_matrix(last_color_matrix)
+                .to_surface();
+            result.canvas().draw_image(
+                &img,
+                (0, 0),
+                Some(Paint::default().set_blend_mode(skia_safe::BlendMode::SrcIn)),
+            );
+            result.canvas().draw_rect(
+                Rect::from_isize(img.dimensions()),
+                Paint::default()
+                    .set_color(Color::WHITE)
+                    .set_blend_mode(skia_safe::BlendMode::DstOver),
+            );
+        }
+
         if !inverse_color {
             result = result
                 .image_snapshot()
                 .color_matrix(inverse_color_matrix)
                 .to_surface();
         }
+
         Ok(result.image_snapshot())
     };
 
@@ -192,7 +234,7 @@ fn halftone(
 }
 
 #[derive(MemeOptions)]
-pub(crate) struct HalftoneEffect {
+pub(crate) struct ColorfulHalftoneEffect {
     /// 点大小
     #[option(long,long_aliases = ["ds","点大小"], minimum = 0.1, maximum = 10.0, default = 1.0)]
     pub dot_size: Option<f32>,
@@ -208,6 +250,14 @@ pub(crate) struct HalftoneEffect {
     /// 反色
     #[option(short, long,long_aliases = ["反色"],default = false)]
     pub inverse_color: Option<bool>,
+
+    /// 彩色
+    #[option(short, long,long_aliases = ["彩色"],default = false)]
+    pub colorful: Option<bool>,
+
+    /// 调试选项
+    #[option(long, default = 0)]
+    pub colorful_inner: Option<i32>,
 }
 
 register_meme!(
@@ -215,7 +265,8 @@ register_meme!(
     halftone,
     min_images = 1,
     max_images = 1,
-    keywords = &["半色调","打印机"],
+    keywords = &["半色调", "打印机"],
+    shortcuts = &[shortcut!("彩色打印机", options = &[("colorful_inner", 1)])],
     date_created = local_date(2025, 11, 11),
     date_modified = local_date(2025, 11, 11),
 );
