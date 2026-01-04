@@ -1,9 +1,7 @@
+use std::cell::LazyCell;
+
 use skia_safe::{
-    BlendMode, Color, ColorMatrix, IPoint, IRect, ISize, Image, ImageFilter, Paint, Point, Shader,
-    TileMode,
-    gradient_shader::{self, GradientShaderColors},
-    image_filters::{self, CropRect},
-    scalar,
+    BlendMode, Color, ColorMatrix, Data, IPoint, IRect, ISize, Image, ImageFilter, Paint, Point, Rect, RuntimeEffect, SamplingOptions, Shader, TileMode, gradient_shader::{self, GradientShaderColors}, image_filters::{self, CropRect}, runtime_effect::ChildPtr, scalar
 };
 
 use meme_generator_core::error::Error;
@@ -15,6 +13,55 @@ use meme_generator_utils::{
 };
 
 use crate::{options::Louvre, register_meme};
+fn create_diff_effect(
+    image1: &Image,
+    image2: &Image,
+    light_cut: f32,
+    dark_cut: f32,
+) -> Result<skia_safe::Shader, Box<dyn std::error::Error>> {
+    const SHADER_SOURCE: &str = r#"
+        uniform shader u_texture1;
+        uniform shader u_texture2;
+        uniform float u_light_cut;
+        uniform float u_dark_cut;
+        
+        vec4 main(vec2 uv) {
+            vec4 color1 = u_texture1.eval(uv);
+            vec4 color2 = u_texture2.eval(uv);
+            float r = 0.5 + color2.r - color1.r; // 128/255 ≈ 0.5
+            float scale = 255.0 / (255.0 - u_light_cut - u_dark_cut);
+            r = clamp((r * 255.0 - u_dark_cut) * scale, 0.0, 255.0) / 255.0;
+            return vec4(r, r, r, 1.0 - r);
+        }
+    "#;
+
+    let effect = LazyCell::new(|| {
+        RuntimeEffect::make_for_shader(SHADER_SOURCE, None).expect("着色器编译失败")
+    });
+
+    // 准备uniform数据
+    let mut uniforms = vec![];
+    uniforms.extend_from_slice(&light_cut.to_le_bytes());
+    uniforms.extend_from_slice(&dark_cut.to_le_bytes());
+
+    let image1_shader = image1
+        .to_shader(None, SamplingOptions::default(), None)
+        .expect("图像转shader错误");
+    let image2_shader = image2
+        .to_shader(None, SamplingOptions::default(), None)
+        .expect("图像转shader错误");
+    let data = Data::new_copy(&uniforms);
+    // 构建漩涡着色器
+    let children = vec![
+        ChildPtr::Shader(image1_shader),
+        ChildPtr::Shader(image2_shader),
+    ];
+    let shader = effect
+        .make_shader(data, &children, None)
+        .ok_or("无法创建着色器")?;
+
+    Ok(shader)
+}
 
 fn create_convolute_average(width: usize) -> Vec<f32> {
     let value = 1.0 / (width * width) as f32;
@@ -188,27 +235,36 @@ pub fn louvre(images: Vec<InputImage>, _: Vec<String>, options: Louvre) -> Resul
             img1 = img.image_filter(filter)
         };
         let img2 = img.to_owned();
-        let img1_data = img1.peek_pixels().unwrap();
-        let img2_data = img2.peek_pixels().unwrap();
         let mut final_img = new_surface(img_size);
         let canvas = final_img.canvas();
-        for x in 0..img.width() {
-            for y in 0..img.height() {
-                let rgb = img1_data.get_color((x, y));
-                let mut r = rgb.r();
-                let mut g = rgb.g();
-                let mut b = rgb.b();
-                let mut a = rgb.a();
-                if diff {
-                    r = 128 + img2_data.get_color((x, y)).r() - r;
-                    let scale: f32 = 255.0 / (255.0 - light_cut - dark_cut);
-                    r = ((r as f32 - dark_cut) * scale).clamp(0.0, 255.0) as u8;
-                    (g, b) = (r, r);
-                    a = 255 - r;
-                }
-                canvas.draw_point((x, y), &new_paint(Color::from_argb(a, r, g, b)));
+        if diff {
+            let size = &img1.dimensions();
+            let shader = create_diff_effect(&img1, &img2, light_cut, dark_cut);
+            if let Err(e) = shader {
+                return Err(Error::MemeFeedback(format!("着色器错误：{:?}", e)));
             }
+            let shader = shader.unwrap();
+            canvas.draw_rect(Rect::from_isize(*size), Paint::default().set_shader(shader));
+        } else {
+            canvas.draw_image(img1, (0, 0), None);
         }
+        // for x in 0..img.width() {
+        //     for y in 0..img.height() {
+        //         let rgb = img1_data.get_color((x, y));
+        //         let mut r = rgb.r();
+        //         let mut g = rgb.g();
+        //         let mut b = rgb.b();
+        //         let mut a = rgb.a();
+        //         if diff {
+        //             r = 128 + img2_data.get_color((x, y)).r() - r;
+        //             let scale: f32 = 255.0 / (255.0 - light_cut - dark_cut);
+        //             r = ((r as f32 - dark_cut) * scale).clamp(0.0, 255.0) as u8;
+        //             (g, b) = (r, r);
+        //             a = 255 - r;
+        //         }
+        //         canvas.draw_point((x, y), &new_paint(Color::from_argb(a, r, g, b)));
+        //     }
+        // }
         if kuma {
             canvas.draw_irect(
                 IRect::from_size(img_size),

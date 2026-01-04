@@ -5,7 +5,7 @@ use meme_generator_core::{
     meme::{self},
 };
 use meme_generator_utils::{
-    builder::InputImage, encoder::{encode_png, make_png_or_gif}, image::ImageExt, tools::local_date
+    builder::InputImage, encoder::{encode_png, make_png_or_gif}, tools::local_date
 };
 
 use crate::{
