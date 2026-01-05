@@ -16,7 +16,7 @@ use meme_generator_utils::{
 
 use crate::register_meme;
 
-fn create_swirl_effect(
+fn create_halftone_effect(
     image: &Image,
     center: impl Into<Point>,
     dot_size: f32,
@@ -93,7 +93,7 @@ vec4 main(vec2 coord) {
 
     // 准备uniform数据
     let mut uniforms = vec![];
-    // 添加漩涡中心 (vec2)
+
     uniforms.extend_from_slice(&center.x.to_le_bytes());
     uniforms.extend_from_slice(&center.y.to_le_bytes());
 
@@ -185,7 +185,7 @@ pub fn halftone(
             )
         }
         let mut result = new_surface(img.dimensions());
-        let shader = create_swirl_effect(
+        let shader = create_halftone_effect(
             &img,
             (0.5, 0.5),
             dot_size,
