@@ -185,14 +185,9 @@ pub fn halftone(
             )
         }
         let mut result = new_surface(img.dimensions());
-        let shader = create_halftone_effect(
-            &img,
-            (0.5, 0.5),
-            dot_size,
-            dot_spacing,
-            angle,
-            gray_threshold,
-        );
+        let center = (img.dimensions().width / 2, img.dimensions().height / 2);
+        let shader =
+            create_halftone_effect(&img, center, dot_size, dot_spacing, angle, gray_threshold);
         if let Err(e) = shader {
             return Err(Error::MemeFeedback(format!("着色器错误：{:?}", e)));
         }
