@@ -1,3 +1,4 @@
+//来自meme_emoji
 use skia_safe::{textlayout::TextAlign, Color, IRect, Image};
 
 use meme_generator_core::error::Error;

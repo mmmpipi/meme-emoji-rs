@@ -103,5 +103,3 @@ pub(crate) struct SwirlEffect {
     #[option(long,long_aliases = ["循环"], default = false)]
     pub loopback: Option<bool>,
 }
-
-pub(crate) use number_option;

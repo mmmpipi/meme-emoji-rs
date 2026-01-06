@@ -5,3 +5,4 @@ mod wave_distortion;
 mod colorful_halftone;
 mod dalia_everyone;
 mod error_meme;
+mod disappear;
