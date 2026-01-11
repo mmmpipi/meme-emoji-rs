@@ -1,7 +1,14 @@
 use std::cell::LazyCell;
 
 use skia_safe::{
-    BlendMode, Color, ColorMatrix, Data, IPoint, IRect, ISize, Image, ImageFilter, Paint, Point, Rect, RuntimeEffect, SamplingOptions, Shader, TileMode, gradient_shader::{self, GradientShaderColors}, image_filters::{self, CropRect}, runtime_effect::ChildPtr, scalar
+    BlendMode, Color, Data, HighContrastConfig, IPoint, IRect, ISize, Image, ImageFilter, Paint,
+    Point, Rect, RuntimeEffect, SamplingOptions, Shader, TileMode,
+    gradient_shader::{self, GradientShaderColors},
+    high_contrast_config::InvertStyle,
+    high_contrast_filter,
+    image_filters::{self, CropRect},
+    runtime_effect::ChildPtr,
+    scalar,
 };
 
 use meme_generator_core::error::Error;
@@ -150,6 +157,7 @@ fn create_kiss_gradient(isize: impl Into<ISize>) -> Option<Shader> {
 
 pub fn louvre(images: Vec<InputImage>, _: Vec<String>, options: Louvre) -> Result<Vec<u8>, Error> {
     let binding = options.convolute.unwrap_or("一般".to_string());
+    let contrast = options.contrast.unwrap_or(0.05);
     let convolute = binding.as_str();
     let gain = options.gain.unwrap_or(2.0);
     let bias = options.bias.unwrap_or(0.0);
@@ -160,14 +168,14 @@ pub fn louvre(images: Vec<InputImage>, _: Vec<String>, options: Louvre) -> Resul
     let full_bg = !options.no_bg.unwrap_or(false);
 
     let func = |images: Vec<Image>| {
-        let luma_matrix = ColorMatrix::new(
-            0.299, 0.587, 0.114, 0.0, 0.0, //
-            0.299, 0.587, 0.114, 0.0, 0.0, //
-            0.299, 0.587, 0.114, 0.0, 0.0, //
-            0.0, 0.0, 0.0, 1.0, 0.0, //
-        );
+        let luma_matrix = high_contrast_filter::new(&HighContrastConfig::new(
+            true,
+            InvertStyle::NoInvert,
+            contrast,
+        ))
+        .unwrap();
         let mut img = images.first().unwrap().to_owned();
-        img = img.color_matrix(luma_matrix);
+        img = img.color_filter(luma_matrix);
         if !options.no_denoise.unwrap_or(false) {
             const NINE: f32 = 1.0 / 9.0;
             let denoise_filter = image_filters::matrix_convolution(
@@ -182,9 +190,7 @@ pub fn louvre(images: Vec<InputImage>, _: Vec<String>, options: Louvre) -> Resul
                 None,
             )
             .unwrap();
-            for _ in 0..options.denoise_times.unwrap_or(1) {
-                img = img.image_filter(denoise_filter.clone());
-            }
+            img = img.image_filter(denoise_filter.clone());
         }
         let img_size = img.dimensions();
         let filter = if convolute == "线稿" {

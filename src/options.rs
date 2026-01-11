@@ -51,9 +51,9 @@ pub(crate) struct Louvre {
     #[option(short, long,long_aliases = ["取消降噪"], default = false)]
     pub no_denoise: Option<bool>,
 
-    /// 降噪次数
-    #[option(long,long_aliases = ["降噪次数"], default = 1)]
-    pub denoise_times: Option<i32>,
+    /// 处理前进行高对比度对于某些图片很合适
+    #[option(long,long_aliases = ["对比度","co"],minimum = 0.0, maximum = 1.0, default = 0.05)]
+    pub contrast: Option<f32>,
 }
 
 #[derive(MemeOptions)]

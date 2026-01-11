@@ -27,7 +27,7 @@ pub fn high_contrast(
             _ => unreachable!(),
         }
     };
-    let contrast = options.contrast.unwrap_or(1.0);
+    let contrast = options.contrast.unwrap_or(0.7);
 
     let single_func = |images: Vec<Image>| {
         let mut img = images.first().unwrap().to_owned();
@@ -56,7 +56,7 @@ pub(crate) struct Options {
     #[option(short, long,long_aliases = ["反转"], choices = ["不反转","反转亮度","反转明度"] , default = "不反转")]
     pub invert_style: Option<String>,
 
-    #[option(short, long,long_aliases = ["对比度"], minimum = -1.0, maximum = 1.0, default = 1.0)]
+    #[option(short, long,long_aliases = ["对比度"], minimum = -1.0, maximum = 1.0, default = 0.7)]
     pub contrast: Option<f32>,
 }
 
