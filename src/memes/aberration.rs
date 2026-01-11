@@ -1,22 +1,20 @@
 use std::cell::LazyCell;
 
 use skia_safe::{
-    Color, ColorMatrix, Data, IRect, Image, Paint, Point, Rect, RuntimeEffect, SamplingOptions,
-    Size, runtime_effect::ChildPtr,
+    Data, IRect, Image, Paint, Point, RuntimeEffect, SamplingOptions,
+    runtime_effect::ChildPtr,
 };
 
 use meme_generator_core::error::Error;
 use meme_generator_utils::{
     builder::{InputImage, MemeOptions},
     encoder::make_png_or_gif,
-    image::ImageExt,
-    shortcut,
     tools::{local_date, new_surface},
 };
 
 use crate::register_meme;
 
-fn create_halftone_effect(
+fn create_effect(
     image: &Image,
     center: impl Into<Point>,
     dot_size: f32,
@@ -92,7 +90,7 @@ pub fn aberration(
 
         let mut result = new_surface(img.dimensions());
         let center = (img.dimensions().width/2,img.dimensions().height/2);
-        let shader = create_halftone_effect(&img, center, dot_size, dot_spacing);
+        let shader = create_effect(&img, center, dot_size, dot_spacing);
         if let Err(e) = shader {
             return Err(Error::MemeFeedback(format!("着色器错误：{:?}", e)));
         }
@@ -110,11 +108,9 @@ pub fn aberration(
 
 #[derive(MemeOptions)]
 pub(crate) struct Options {
-    /// 点大小
     #[option(short,long,long_aliases = ["色差强度"], minimum = 0.0, maximum = 100.0, default = 0.1)]
     pub amount: Option<f32>,
 
-    /// 点间距
     #[option(short, long,long_aliases = ["色差衰减"], minimum = -100.0, maximum = 100.0, default = 10.0)]
     pub falloff: Option<f32>,
 }
