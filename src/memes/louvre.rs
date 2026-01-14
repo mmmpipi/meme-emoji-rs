@@ -176,7 +176,7 @@ pub fn louvre(images: Vec<InputImage>, _: Vec<String>, options: Louvre) -> Resul
         .unwrap();
         let mut img = images.first().unwrap().to_owned();
         img = img.color_filter(luma_matrix);
-        if !options.no_denoise.unwrap_or(false) {
+        if options.denoise.unwrap_or(false) {
             const NINE: f32 = 1.0 / 9.0;
             let denoise_filter = image_filters::matrix_convolution(
                 (3, 3),

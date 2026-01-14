@@ -47,9 +47,9 @@ pub(crate) struct Louvre {
     #[option(long,long_aliases = ["线迹轻重"], minimum = 80.0, maximum = 126.0, default = 118.0)]
     pub dark_cut: Option<f32>,
 
-    /// 取消降噪
-    #[option(short, long,long_aliases = ["取消降噪"], default = false)]
-    pub no_denoise: Option<bool>,
+    /// 降噪
+    #[option(short, long,long_aliases = ["降噪"], default = false)]
+    pub denoise: Option<bool>,
 
     /// 处理前进行高对比度对于某些图片很合适
     #[option(long,long_aliases = ["对比度","co"],minimum = 0.0, maximum = 1.0, default = 0.05)]
