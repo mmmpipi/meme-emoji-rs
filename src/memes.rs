@@ -9,3 +9,6 @@ mod disappear;
 mod aberration;
 mod fisheye;
 mod high_contrast;
+mod sitdown_do;
+mod behind_do;
+mod laydown_do;

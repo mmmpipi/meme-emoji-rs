@@ -11,6 +11,7 @@
 ## meme-emoji-rs 表情包扩展仓库 
 
 基于 [meme-generator-rs](https://github.com/MemeCrafters/meme-generator-rs) 的一些表情包扩展
+部分表情来源于[meme_emoji](https://github.com/anyliew/meme_emoji)
 
 
 ## 📄 使用教程 
