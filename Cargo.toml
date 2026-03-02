@@ -1,5 +1,5 @@
 [package]
-name = "meme-emoji"
+name = "meme-emoji-rs"
 version = "0.1.0"
 edition = "2024"
 
