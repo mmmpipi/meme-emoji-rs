@@ -33,8 +33,8 @@ jobs:
             label: macos-aarch64
 
     steps:
-      - uses: actions/checkout@v4
-      - uses: dtolnay/rust-toolchain@1.88.0
+      - uses: actions/checkout@v5
+      - uses: dtolnay/rust-toolchain@stable
       - uses: swatinem/rust-cache@v2
 
       - name: Rustup add target
@@ -43,7 +43,7 @@ jobs:
       - name: Build target
         run: cargo build --release --target ${{ matrix.platform.target }}
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v6
         with:
           name: "meme-emoji-rs-${{ matrix.platform.label }}"
           path: |
@@ -66,8 +66,8 @@ jobs:
             label: linux-aarch64
 
     steps:
-      - uses: actions/checkout@v4
-      - uses: dtolnay/rust-toolchain@1.88.0
+      - uses: actions/checkout@v5
+      - uses: dtolnay/rust-toolchain@stable
       - uses: swatinem/rust-cache@v2
 
       - name: Rustup add target
@@ -76,7 +76,34 @@ jobs:
       - name: Build target
         run: cargo build --release --target ${{ matrix.platform.target }}
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v6
+        with:
+          name: "meme-emoji-rs-${{ matrix.platform.label }}"
+          path: |
+            target/${{ matrix.platform.target }}/release/*.so
+  build_android:
+    runs-on: ${{ matrix.platform.runner }}
+    container: ${{ matrix.platform.container }}
+    strategy:
+      matrix:
+        platform:
+          - runner: ubuntu-latest
+            container: ghcr.io/memecrafters/meme-generator-build-container:android
+            target: aarch64-linux-android
+            label: android-aarch64
+
+    steps:
+      - uses: actions/checkout@v5
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: swatinem/rust-cache@v2
+
+      - name: Rustup add target
+        run: rustup target add ${{ matrix.platform.target }}
+
+      - name: Build target
+        run: cargo build --release --target ${{ matrix.platform.target }}
+
+      - uses: actions/upload-artifact@v6
         with:
           name: "meme-emoji-rs-${{ matrix.platform.label }}"
           path: |
