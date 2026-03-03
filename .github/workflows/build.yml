@@ -45,7 +45,7 @@ jobs:
 
       - uses: actions/upload-artifact@v4
         with:
-          name: "meme-emoji-${{ matrix.platform.label }}"
+          name: "meme-emoji-rs-${{ matrix.platform.label }}"
           path: |
             target/${{ matrix.platform.target }}/release/*.dll
             target/${{ matrix.platform.target }}/release/*.dylib
@@ -78,6 +78,6 @@ jobs:
 
       - uses: actions/upload-artifact@v4
         with:
-          name: "meme-emoji-${{ matrix.platform.label }}"
+          name: "meme-emoji-rs-${{ matrix.platform.label }}"
           path: |
             target/${{ matrix.platform.target }}/release/*.so
