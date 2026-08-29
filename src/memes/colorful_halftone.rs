@@ -5,7 +5,9 @@ use meme_generator_core::{
     meme::{self},
 };
 use meme_generator_utils::{
-    builder::InputImage, encoder::{encode_png, make_png_or_gif}, tools::local_date
+    builder::InputImage,
+    encoder::{encode_png, make_png_or_gif},
+    tools::local_date,
 };
 
 use crate::{
@@ -42,7 +44,10 @@ fn colorful_halftone(
         let louvre = louvre(
             vec![InputImage::from(&data)?],
             vec![],
-            options::Louvre::default(),
+            options::Louvre {
+                no_toon: Some(true),
+                ..options::Louvre::default()
+            },
         )?;
         let data = Data::new_copy(&louvre);
         let image = Image::from_encoded(data);

@@ -7,14 +7,14 @@ edition = "2024"
 crate-type = ["cdylib"]
 
 [dependencies]
-inventory = "0.3"
+inventory = "0.3.24"
 serde = "1.0"
 tween = { version = "2.2" }
 skia-safe = { version = "0.93", features = ["textlayout"] }
 
 meme_generator_core = "0.0.5"
 meme_generator_utils = "0.0.9"
-rand = "0.10"
+rand = "0.10.1"
 
 [profile.release]
 strip = true
