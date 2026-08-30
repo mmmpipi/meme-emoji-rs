@@ -46,6 +46,7 @@ fn colorful_halftone(
             vec![],
             options::Louvre {
                 no_toon: Some(true),
+                no_canny: Some(true),
                 ..options::Louvre::default()
             },
         )?;

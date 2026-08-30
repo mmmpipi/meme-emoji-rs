@@ -60,15 +60,171 @@ const BILATERAL_SHADER_SOURCE: &str = r#"
     }
 "#;
 
+const SOBEL_SHADER_SOURCE: &str = r#"
+    uniform shader u_image;
+    uniform float u_gain;
+
+    float feature(vec4 c) {
+        float luma = dot(c.rgb, vec3(0.299, 0.587, 0.114));
+        float maxc = max(c.r, max(c.g, c.b));
+        float minc = min(c.r, min(c.g, c.b));
+        return luma + (maxc - minc);
+    }
+
+    float sample_f(vec2 p) {
+        return feature(u_image.eval(p));
+    }
+
+    vec4 main(vec2 uv) {
+        float tl = sample_f(uv + vec2(-1.0, -1.0));
+        float t  = sample_f(uv + vec2( 0.0, -1.0));
+        float tr = sample_f(uv + vec2( 1.0, -1.0));
+        float l  = sample_f(uv + vec2(-1.0,  0.0));
+        float r  = sample_f(uv + vec2( 1.0,  0.0));
+        float bl = sample_f(uv + vec2(-1.0,  1.0));
+        float b  = sample_f(uv + vec2( 0.0,  1.0));
+        float br = sample_f(uv + vec2( 1.0,  1.0));
+        float gx = (-tl + tr - 2.0 * l + 2.0 * r - bl + br) * 0.125;
+        float gy = (-tl - 2.0 * t - tr + bl + 2.0 * b + br) * 0.125;
+        float mag = length(vec2(gx, gy)) * u_gain;
+        return vec4(gx, gy, 0.0, mag);
+    }
+"#;
+
+const NMS_SHADER_SOURCE: &str = r#"
+    uniform shader u_grad;
+    uniform float u_soft;
+
+    float mag_at(vec2 p) {
+        return u_grad.eval(p).a;
+    }
+
+    vec4 main(vec2 uv) {
+        vec4 g = u_grad.eval(uv);
+        float mag = g.a;
+        if (mag < 0.0001) {
+            return vec4(0.0);
+        }
+        float ax = abs(g.r);
+        float ay = abs(g.g);
+        float m1 = 0.0;
+        float m2 = 0.0;
+        if (ax > 2.41421356 * ay) {
+            m1 = mag_at(uv + vec2(-1.0, 0.0));
+            m2 = mag_at(uv + vec2(1.0, 0.0));
+        } else if (ay > 2.41421356 * ax) {
+            m1 = mag_at(uv + vec2(0.0, -1.0));
+            m2 = mag_at(uv + vec2(0.0, 1.0));
+        } else if (g.r * g.g > 0.0) {
+            m1 = mag_at(uv + vec2(-1.0, -1.0));
+            m2 = mag_at(uv + vec2(1.0, 1.0));
+        } else {
+            m1 = mag_at(uv + vec2(-1.0, 1.0));
+            m2 = mag_at(uv + vec2(1.0, -1.0));
+        }
+        float nmax = max(m1, m2);
+        float keep;
+        if (u_soft < 0.001) {
+            keep = mag >= nmax ? mag : 0.0;
+        } else {
+            float lo = nmax * (1.0 - u_soft);
+            keep = mag * smoothstep(lo, nmax, mag);
+        }
+        return vec4(0.0, 0.0, 0.0, keep);
+    }
+"#;
+
+const HYST_INIT_SHADER_SOURCE: &str = r#"
+    uniform shader u_nms;
+    uniform float u_high;
+
+    vec4 main(vec2 uv) {
+        float mag = u_nms.eval(uv).a;
+        if (mag < u_high) {
+            return vec4(0.0);
+        }
+        float ink = clamp(mag / max(u_high * 0.5, 0.001), 0.0, 1.0);
+        return vec4(0.0, 0.0, 0.0, ink);
+    }
+"#;
+
+const HYST_STEP_SHADER_SOURCE: &str = r#"
+    uniform shader u_nms;
+    uniform shader u_strong;
+    uniform float u_low;
+    uniform float u_high;
+
+    vec4 main(vec2 uv) {
+        float mag = u_nms.eval(uv).a;
+        if (mag < u_low) {
+            return vec4(0.0);
+        }
+        float ink = clamp(mag / max(u_high * 0.5, 0.001), 0.0, 1.0);
+        float self = u_strong.eval(uv).a;
+        if (self > 0.02) {
+            return vec4(0.0, 0.0, 0.0, max(self, ink));
+        }
+        float neigh = 0.0;
+        neigh = max(neigh, u_strong.eval(uv + vec2(-1.0, -1.0)).a);
+        neigh = max(neigh, u_strong.eval(uv + vec2( 0.0, -1.0)).a);
+        neigh = max(neigh, u_strong.eval(uv + vec2( 1.0, -1.0)).a);
+        neigh = max(neigh, u_strong.eval(uv + vec2(-1.0,  0.0)).a);
+        neigh = max(neigh, u_strong.eval(uv + vec2( 1.0,  0.0)).a);
+        neigh = max(neigh, u_strong.eval(uv + vec2(-1.0,  1.0)).a);
+        neigh = max(neigh, u_strong.eval(uv + vec2( 0.0,  1.0)).a);
+        neigh = max(neigh, u_strong.eval(uv + vec2( 1.0,  1.0)).a);
+        float keep = neigh > 0.02 ? ink : 0.0;
+        return vec4(0.0, 0.0, 0.0, keep);
+    }
+"#;
+
 thread_local! {
     static DIFF_EFFECT: RuntimeEffect = RuntimeEffect::make_for_shader(DIFF_SHADER_SOURCE, None)
         .expect("着色器编译失败");
     static BILATERAL_EFFECT: RuntimeEffect = RuntimeEffect::make_for_shader(BILATERAL_SHADER_SOURCE, None)
         .expect("着色器编译失败");
+    static SOBEL_EFFECT: RuntimeEffect = RuntimeEffect::make_for_shader(SOBEL_SHADER_SOURCE, None)
+        .expect("着色器编译失败");
+    static NMS_EFFECT: RuntimeEffect = RuntimeEffect::make_for_shader(NMS_SHADER_SOURCE, None)
+        .expect("着色器编译失败");
+    static HYST_INIT_EFFECT: RuntimeEffect = RuntimeEffect::make_for_shader(HYST_INIT_SHADER_SOURCE, None)
+        .expect("着色器编译失败");
+    static HYST_STEP_EFFECT: RuntimeEffect = RuntimeEffect::make_for_shader(HYST_STEP_SHADER_SOURCE, None)
+        .expect("着色器编译失败");
 }
 
 fn filter_error(msg: &str) -> Error {
     Error::MemeFeedback(msg.to_string())
+}
+
+fn image_clamp_shader(image: &Image) -> Result<Shader, Box<dyn std::error::Error>> {
+    image
+        .to_shader(
+            Some((TileMode::Clamp, TileMode::Clamp)),
+            SamplingOptions::default(),
+            None,
+        )
+        .ok_or("图像转shader错误")
+        .map_err(Into::into)
+}
+
+fn draw_shader(size: ISize, shader: Shader) -> Image {
+    let mut surface = new_surface(size);
+    surface
+        .canvas()
+        .draw_rect(Rect::from_isize(size), Paint::default().set_shader(shader));
+    surface.image_snapshot()
+}
+
+fn gaussian_clamp(image: &Image, sigma: f32) -> Result<Image, Error> {
+    let filter = image_filters::blur(
+        (sigma.max(0.3), sigma.max(0.3)),
+        TileMode::Clamp,
+        None,
+        None,
+    )
+    .ok_or_else(|| filter_error("blur filter create Failed!"))?;
+    Ok(image.image_filter(filter))
 }
 
 fn contrast_filter(grayscale: bool, contrast: f32, denoise: bool) -> Result<ImageFilter, Error> {
@@ -113,6 +269,105 @@ fn create_diff_effect(
             .make_shader(Data::new_copy(&uniforms), &children, None)
             .ok_or_else(|| "无法创建着色器".into())
     })
+}
+
+fn create_sobel_effect(image: &Image, gain: f32) -> Result<Shader, Box<dyn std::error::Error>> {
+    let mut uniforms = Vec::with_capacity(4);
+    uniforms.extend_from_slice(&gain.to_le_bytes());
+    let children = [ChildPtr::Shader(image_clamp_shader(image)?)];
+    SOBEL_EFFECT.with(|effect| {
+        effect
+            .make_shader(Data::new_copy(&uniforms), &children, None)
+            .ok_or_else(|| "无法创建着色器".into())
+    })
+}
+
+fn create_nms_effect(grad: &Image, soft: f32) -> Result<Shader, Box<dyn std::error::Error>> {
+    let mut uniforms = Vec::with_capacity(4);
+    uniforms.extend_from_slice(&soft.to_le_bytes());
+    let children = [ChildPtr::Shader(image_clamp_shader(grad)?)];
+    NMS_EFFECT.with(|effect| {
+        effect
+            .make_shader(Data::new_copy(&uniforms), &children, None)
+            .ok_or_else(|| "无法创建着色器".into())
+    })
+}
+
+fn create_hyst_init_effect(nms: &Image, high: f32) -> Result<Shader, Box<dyn std::error::Error>> {
+    let mut uniforms = Vec::with_capacity(4);
+    uniforms.extend_from_slice(&high.to_le_bytes());
+    let children = [ChildPtr::Shader(image_clamp_shader(nms)?)];
+    HYST_INIT_EFFECT.with(|effect| {
+        effect
+            .make_shader(Data::new_copy(&uniforms), &children, None)
+            .ok_or_else(|| "无法创建着色器".into())
+    })
+}
+
+fn create_hyst_step_effect(
+    nms: &Image,
+    strong: &Image,
+    low: f32,
+    high: f32,
+) -> Result<Shader, Box<dyn std::error::Error>> {
+    let mut uniforms = Vec::with_capacity(8);
+    uniforms.extend_from_slice(&low.to_le_bytes());
+    uniforms.extend_from_slice(&high.to_le_bytes());
+    let children = [
+        ChildPtr::Shader(image_clamp_shader(nms)?),
+        ChildPtr::Shader(image_clamp_shader(strong)?),
+    ];
+    HYST_STEP_EFFECT.with(|effect| {
+        effect
+            .make_shader(Data::new_copy(&uniforms), &children, None)
+            .ok_or_else(|| "无法创建着色器".into())
+    })
+}
+
+fn canny_preset(convolute: &str) -> Option<(f32, f32)> {
+    match convolute {
+        "极细" => Some((0.55, 0.0)),
+        "精细" => Some((0.7, 0.0)),
+        "一般" => Some((0.85, 0.0)),
+        "稍粗" => Some((1.0, 1.0)),
+        "超粗" => Some((1.15, 2.0)),
+        "极粗" => Some((1.3, 3.0)),
+        _ => None,
+    }
+}
+
+fn canny_edges(
+    image: &Image,
+    sigma: f32,
+    gain: f32,
+    low: f32,
+    high: f32,
+    nms_soft: f32,
+    hyst_rounds: i32,
+    dilate_radius: f32,
+) -> Result<Image, Error> {
+    let size = image.dimensions();
+    let blurred = gaussian_clamp(image, sigma)?;
+    let shader =
+        create_sobel_effect(&blurred, gain).map_err(|e| filter_error(&format!("{e:?}")))?;
+    let grad = draw_shader(size, shader);
+    let shader = create_nms_effect(&grad, nms_soft).map_err(|e| filter_error(&format!("{e:?}")))?;
+    let nms = draw_shader(size, shader);
+    let shader =
+        create_hyst_init_effect(&nms, high).map_err(|e| filter_error(&format!("{e:?}")))?;
+    let mut strong = draw_shader(size, shader);
+    for _ in 0..hyst_rounds.max(0) {
+        let shader = create_hyst_step_effect(&nms, &strong, low, high)
+            .map_err(|e| filter_error(&format!("{e:?}")))?;
+        strong = draw_shader(size, shader);
+    }
+    if dilate_radius > 0.05 {
+        let filter = image_filters::dilate((dilate_radius, dilate_radius), None, None)
+            .ok_or_else(|| filter_error("dilate Failed!"))?;
+        Ok(strong.image_filter(filter))
+    } else {
+        Ok(strong)
+    }
 }
 
 fn separable_average_filter(
@@ -322,6 +577,17 @@ pub fn louvre(images: Vec<InputImage>, _: Vec<String>, options: Louvre) -> Resul
     let sigma_s = options.sigma_s.unwrap_or(3.0);
     let sigma_r = options.sigma_r.unwrap_or(0.08);
     let diff = convolute != "线稿" && !options.no_diff.unwrap_or(false);
+    let canny_cfg = if diff && !options.no_canny.unwrap_or(false) {
+        canny_preset(&convolute)
+    } else {
+        None
+    };
+    let canny_sigma = options.canny_sigma;
+    let canny_dilate = options.canny_dilate;
+    let canny_high = options.canny_high.unwrap_or(0.049).max(0.001);
+    let canny_low = options.canny_low.unwrap_or(0.024).clamp(0.0, canny_high);
+    let nms_soft = options.nms.unwrap_or(0.72).clamp(0.0, 1.0);
+    let hyst_rounds = options.hyst.unwrap_or(8).clamp(0, 16);
     let kuma = !options.gray.unwrap_or(false);
     let full_bg = !options.no_bg.unwrap_or(false);
 
@@ -336,7 +602,23 @@ pub fn louvre(images: Vec<InputImage>, _: Vec<String>, options: Louvre) -> Resul
         let mut final_img = new_surface(img_size);
         {
             let canvas = final_img.canvas();
-            if diff {
+            if let Some((preset_sigma, preset_dilate)) = canny_cfg {
+                let color_img = work.image_filter(contrast_filter(false, contrast, denoise)?);
+                let sigma = canny_sigma.unwrap_or(preset_sigma);
+                let dilate_radius = canny_dilate.unwrap_or(preset_dilate);
+                let mag_scale = (gain * 0.7).max(0.1);
+                let edges = canny_edges(
+                    &color_img,
+                    sigma,
+                    mag_scale,
+                    canny_low,
+                    canny_high,
+                    nms_soft,
+                    hyst_rounds,
+                    dilate_radius,
+                )?;
+                canvas.draw_image(&edges, (0, 0), None);
+            } else if diff {
                 let base_filter = contrast_filter(true, contrast, denoise)?;
                 let edge = edge_filter(&convolute, gain, bias)?;
                 let img2 = work.image_filter(base_filter);
@@ -390,5 +672,5 @@ register_meme!(
     max_images = 1,
     keywords = &["卢浮宫"],
     date_created = local_date(2025, 8, 10),
-    date_modified = local_date(2026, 8, 29),
+    date_modified = local_date(2026, 8, 30),
 );

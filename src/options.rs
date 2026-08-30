@@ -44,7 +44,7 @@ pub(crate) struct Louvre {
     pub bias: Option<f32>,
 
     /// 线迹轻重
-    #[option(long,long_aliases = ["线迹轻重"], minimum = 80.0, maximum = 126.0, default = 118.0)]
+    #[option(long,long_aliases = ["线迹轻重"], minimum = 0.0, maximum = 126.0, default = 1.0)]
     pub dark_cut: Option<f32>,
 
     /// 降噪
@@ -55,12 +55,40 @@ pub(crate) struct Louvre {
     #[option(long, long_aliases = ["关闭赛璐璐"], default = false)]
     pub no_toon: Option<bool>,
 
+    /// 关闭 Canny，回退卷积差分
+    #[option(long, long_aliases = ["关闭Canny"], default = false)]
+    pub no_canny: Option<bool>,
+
+    /// Canny 高斯，不填则跟卷积矩阵
+    #[option(long, long_aliases = ["高斯"], minimum = 0.3, maximum = 4.0, default = 0.5)]
+    pub canny_sigma: Option<f32>,
+
+    /// Canny 高阈值
+    #[option(long, long_aliases = ["高阈值"], minimum = 0.001, maximum = 0.8, default = 0.02)]
+    pub canny_high: Option<f32>,
+
+    /// Canny 低阈值
+    #[option(long, long_aliases = ["低阈值"], minimum = 0.0, maximum = 0.8, default = 0.008)]
+    pub canny_low: Option<f32>,
+
+    /// NMS 软度，0 硬抑制，越大越软
+    #[option(long, long_aliases = ["NMS"], minimum = 0.0, maximum = 1.0, default = 0.3)]
+    pub nms: Option<f32>,
+
+    /// 滞后连接次数
+    #[option(long, long_aliases = ["滞后"], minimum = 0, maximum = 16, default = 16)]
+    pub hyst: Option<i32>,
+
+    /// Canny 后膨胀，不填则跟卷积矩阵
+    #[option(long, long_aliases = ["膨胀"], minimum = 0.0, maximum = 8.0)]
+    pub canny_dilate: Option<f32>,
+
     /// 预处理缩小倍数
-    #[option(long, long_aliases = ["缩小倍数"], minimum = 1.0, maximum = 4.0, default = 1.6)]
+    #[option(long, long_aliases = ["缩小倍数"], minimum = 1.0, maximum = 4.0, default = 1.0)]
     pub toon_scale: Option<f32>,
 
     /// 保边平滑空间半径
-    #[option(long, long_aliases = ["平滑半径"], minimum = 0.5, maximum = 16.0, default = 3.0)]
+    #[option(long, long_aliases = ["平滑半径"], minimum = 0.5, maximum = 16.0, default = 1.0)]
     pub sigma_s: Option<f32>,
 
     /// 保边平滑色差
