@@ -45,8 +45,7 @@ fn colorful_halftone(
             vec![InputImage::from(&data)?],
             vec![],
             options::Louvre {
-                no_toon: Some(true),
-                no_canny: Some(true),
+                classic: Some(true),
                 ..options::Louvre::default()
             },
         )?;

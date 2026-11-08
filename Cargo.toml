@@ -10,11 +10,15 @@ crate-type = ["cdylib"]
 inventory = "0.3.24"
 serde = "1.0"
 tween = { version = "2.2" }
-skia-safe = { version = "0.93", features = ["textlayout"] }
+skia-safe = { version = "0.93", features = ["textlayout","gl"] }
 
 meme_generator_core = "0.0.5"
 meme_generator_utils = "0.0.9"
 rand = "0.10.1"
+
+# GPU 后端用：运行时 dlopen libEGL，创建无窗口上下文；缺库时优雅回退到 CPU
+khronos-egl = { version = "6.0", features = ["dynamic"] }
+libloading = "0.8"
 
 [profile.release]
 strip = true

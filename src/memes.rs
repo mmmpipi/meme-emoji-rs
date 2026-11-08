@@ -1,4 +1,6 @@
 mod louvre;
+#[cfg(test)]
+mod louvre_dev;
 mod halftone;
 mod swirl;
 mod wave_distortion;
